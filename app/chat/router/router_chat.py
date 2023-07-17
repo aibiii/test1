@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from app.utils import AppModel
 from ..service import Service, get_service
-from telegram import Update
 from telegram.ext import CommandHandler, MessageHandler, filters, Updater
 import openai
 import requests

@@ -6,14 +6,11 @@ from telegram.ext import CommandHandler, MessageHandler, filters, Updater
 import openai
 import requests
 import logging
-from twilio.rest import Client
 
 router = APIRouter()
 import os
 yandex_maps_api_key = os.getenv("YANDEX_MAPS_API_KEY")
 telegram_api_key = os.getenv("TELEGRAM_API_KEY")
-account_sid = os.getenv("ACCOUNT_SID")
-auth_token = os.getenv("AUTH_TOKEN")
 
 
 class ChatRequest(AppModel):

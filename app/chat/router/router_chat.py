@@ -22,9 +22,19 @@ class ChatRequest(AppModel):
 class ChatResponse(AppModel):
     response: str
 
-
-def greet_user() -> str:
-    return "Привет! Я текстовый генератор для бронирования столиков в ресторанах и записей в салонах красоты. Чем я могу помочь?"
+# Helper function to get the initial greeting using GPT-3.5 turbo
+def get_initial_greeting():
+    system_message = '''
+        Вы помощник, генерирующий сообщения для бронирования. Приветствуйте пользователя и представьтесь.
+    '''
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo-16k",
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": ""}
+        ]
+    )
+    return response.choices[0].message.content
 
 @router.post("/")
 def chat_with_ai(
@@ -33,9 +43,11 @@ def chat_with_ai(
 ) -> ChatResponse:
     message = request.message
 
-    # Check if this is the user's first message and greet the user
-    if not message.strip():
-        return ChatResponse(response=greet_user())
+    # Send the initial greeting to the user
+    bot_greeting = get_initial_greeting()
+
+    # Combine the bot's greeting and user's message when calling the OpenAI API
+    combined_message = bot_greeting + " " + user_message
 
     # Generate a response from ChatGPT
     response = openai.ChatCompletion.create(
@@ -52,7 +64,7 @@ def chat_with_ai(
             Например, если пользователь вводит "Luckee Yu на Навои, завтра в 7 вечера, столик на 4, Даяна", то генерируйте что-то на подобии "Добрый день! Я хотела бы забронировать столик на 4 человека на завтра в 7 вечера на имя Даяна. Будут свободные? Спасибо."
             Например, если пользователь вводит "Montebello, 12 мая в 4.30, женская стрижка, Дильназ", то генерируйте что-то на подобии "Здравствуйте! Я хотела бы запланировать женскую стрижку в вашем салоне, на 12 мая в 4.30. Бронь на имя Дильназ. Надеюсь, что вы сможете меня принять, благодарю!"
             '''},
-            {"role": "user", "content": message}
+            {"role": "user", "content": combined_message}
         ]
     )
 

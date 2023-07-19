@@ -55,18 +55,24 @@ def chat_with_ai(
     location_name = extract_location_name(generated_text)
 
     # Search for the location using the Yandex Maps API
-    location_info = search_location(location_name)
+    if location_name:
+        location_info = search_location(location_name)
 
-    if location_info:
-        # Extract the phone number from the location info
-        phone_number = location_info.get('phone_number')
+        if location_info:
+            # Extract the phone number from the location info
+            phone_number = location_info.get('phone_number')
 
-        # Send the phone number to the user
-        # Here, you can use a messaging service or directly send the response to the user
-        # For simplicity, let's assume you directly send the response
-        return ChatResponse(response=f"Номер телефона {location_name}: {phone_number}\n\n{generated_text}")
+            # Send the phone number to the user
+            # Here, you can use a messaging service or directly send the response to the user
+            # For simplicity, let's assume you directly send the response
+            if location_name.lower() in message.lower():
+                return ChatResponse(response=f"Номер телефона {location_name}: {phone_number}\n\n{generated_text}")
+            else:
+                return ChatResponse(response=f"Номер телефона {location_name}: {phone_number}")
+        else:
+            return ChatResponse(response="Sorry, couldn't find the location. Please input a valid location name or add specific things such as the name of the road or place.")
     else:
-        return ChatResponse(response=f"Sorry, I couldn't find information for {location_name}.")
+        return ChatResponse(response="If you need a generated message, give me full instructions.")
 
 
 def extract_location_name(generated_text):

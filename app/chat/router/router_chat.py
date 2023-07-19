@@ -6,6 +6,7 @@ import openai
 import requests
 import logging
 from twilio.rest import Client
+from typing import List
 
 router = APIRouter()
 import os

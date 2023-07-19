@@ -41,7 +41,7 @@ def chat_with_ai(
     request: ChatRequest,
     svc: Service = Depends(get_service),
 ) -> ChatResponse:
-    message = request.message
+    user_message = request.message
 
     # Send the initial greeting to the user
     bot_greeting = get_initial_greeting()

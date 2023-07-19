@@ -22,32 +22,13 @@ class ChatRequest(AppModel):
 class ChatResponse(AppModel):
     response: str
 
-# Helper function to get the initial greeting using GPT-3.5 turbo
-def get_initial_greeting():
-    system_message = '''
-        Вы помощник, генерирующий сообщения для бронирования. Приветствуйте пользователя и представьтесь.
-    '''
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k",
-        messages=[
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": ""}
-        ]
-    )
-    return response.choices[0].message.content
 
 @router.post("/")
 def chat_with_ai(
     request: ChatRequest,
     svc: Service = Depends(get_service),
 ) -> ChatResponse:
-    user_message = request.message
-
-    # Send the initial greeting to the user
-    bot_greeting = get_initial_greeting()
-
-    # Combine the bot's greeting and user's message when calling the OpenAI API
-    combined_message = bot_greeting + " " + user_message
+    message = request.message
 
     # Generate a response from ChatGPT
     response = openai.ChatCompletion.create(
@@ -64,7 +45,7 @@ def chat_with_ai(
             Например, если пользователь вводит "Luckee Yu на Навои, завтра в 7 вечера, столик на 4, Даяна", то генерируйте что-то на подобии "Добрый день! Я хотела бы забронировать столик на 4 человека на завтра в 7 вечера на имя Даяна. Будут свободные? Спасибо."
             Например, если пользователь вводит "Montebello, 12 мая в 4.30, женская стрижка, Дильназ", то генерируйте что-то на подобии "Здравствуйте! Я хотела бы запланировать женскую стрижку в вашем салоне, на 12 мая в 4.30. Бронь на имя Дильназ. Надеюсь, что вы сможете меня принять, благодарю!"
             '''},
-            {"role": "user", "content": combined_message}
+            {"role": "user", "content": message}
         ]
     )
 
@@ -89,20 +70,28 @@ def chat_with_ai(
 
 
 def extract_location_name(generated_text):
+    system_message = '''
+        Напишите локацию места из сообщения.
+        Локация обязательно должна быть в городе Алматы.
+        Если пользователь не указывал локацию, верните пустую строку и попросите пользователя указать название локации.
+        Например, если пользователь ввел "Столик на пятерых, Бочонок на Назарбаева, сегодня, 8 вечера, Амир", то локация: Бочонок на Назарбаева.
+        Например, если пользователь ввел "Столик на двоих, ресторан Nino, сегодня в 18:00, Жанар", то локация: Nino.
+        Если у локации несколько филиалов, и пользователь не отметил какая именно ему требуется, попроси пользователя быть более специфичным и указать улицу по которой находится локация.
+    '''
+
+    # Ask GPT-3.5 turbo to identify the location from the user's message
     place_name = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-16k",
         messages=[
-            {"role": "system", "content": '''
-            Напиши локацию места из сообщения. 
-            Локация обязательно должна быть в городе Алматы.
-            Например, если пользователь ввел "Столик на пятерых, Бочонок на Назарбаева, сегодня, 8 вечера, Амир", то локация: Бочонок на Назарбаева
-            '''},
+            {"role": "system", "content": system_message},
             {"role": "user", "content": generated_text}
         ]
     )
 
-    extracted_name = place_name.choices[0].message.content
-    return extracted_name
+    extracted_name = place_name.choices[0].message.content.strip()
+
+    # Return the extracted location name if GPT-3.5 turbo identified a location, otherwise return an empty string
+    return extracted_name if extracted_name else ""
 
 
 def search_location(location_name):

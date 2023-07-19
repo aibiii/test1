@@ -27,7 +27,7 @@ class ChatResponse(AppModel):
 def chat_with_ai(
     request: ChatRequest,
     svc: Service = Depends(get_service),
-) -> ChatResponse:
+) -> List[ChatResponse]:
     message = request.message
 
     # Generate a response from ChatGPT
@@ -51,6 +51,19 @@ def chat_with_ai(
 
     generated_text = response.choices[0].message.content
 
+    # Generate the phone number of the location
+    phone_number_response = generate_phone_number(generated_text)
+
+    # Generate the booking message
+    booking_message_response = generate_booking_message(generated_text)
+
+    # Generate the confirmation message
+    confirmation_response = generate_confirmation_message(booking_message_response.response)
+
+    # Return all three responses
+    return [phone_number_response, booking_message_response, confirmation_response]
+
+def generate_phone_number(generated_text):
     # Extract the location name from the generated text
     location_name = extract_location_name(generated_text)
 
@@ -61,12 +74,27 @@ def chat_with_ai(
         # Extract the phone number from the location info
         phone_number = location_info.get('phone_number')
 
-        # Send the phone number to the user
-        # Here, you can use a messaging service or directly send the response to the user
-        # For simplicity, let's assume you directly send the response
-        return ChatResponse(response=f"Номер телефона {location_name}: {phone_number}\n\n{generated_text}")
-    else:
-        return ChatResponse(response=f"Sorry, I couldn't find information for {location_name}.")
+        # Generate and return the phone number response
+        return ChatResponse(response=f"Номер телефона {location_name}: {phone_number}")
+
+    return ChatResponse(response=f"Sorry, I couldn't find information for {location_name}.")
+
+def generate_booking_message(generated_text):
+    # You can implement the logic to extract and generate the booking message here
+    # For simplicity, let's assume we have the booking message in the 'generated_text'
+    # You can also call another function to perform this task if required
+    booking_message = "Generated booking message here"
+
+    # Generate and return the booking message response
+    return ChatResponse(response=booking_message)
+
+def generate_confirmation_message(booking_message):
+    # You can implement the logic to generate the confirmation message here
+    # For simplicity, let's assume we have a basic confirmation message structure
+    confirmation_message = f"Does this booking message satisfy your request?\n\n{booking_message}"
+
+    # Generate and return the confirmation message response
+    return ChatResponse(response=confirmation_message)
 
 
 def extract_location_name(generated_text):

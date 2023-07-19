@@ -9,6 +9,7 @@ from twilio.rest import Client
 
 router = APIRouter()
 import os
+
 yandex_maps_api_key = os.getenv("YANDEX_MAPS_API_KEY")
 telegram_api_key = os.getenv("TELEGRAM_API_KEY")
 account_sid = os.getenv("ACCOUNT_SID")
@@ -30,7 +31,6 @@ def chat_with_ai(
 ) -> ChatResponse:
     message = request.message
 
-    # Generate a response from ChatGPT
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-16k",
         messages=[
@@ -54,50 +54,40 @@ def chat_with_ai(
     # Extract the location name from the generated text
     location_name = extract_location_name(generated_text)
 
+    if not location_name:
+        # GPT couldn't extract the location name, respond to the user's input without mentioning the location or phone number
+        return ChatResponse(response=generated_text)
+
     # Search for the location using the Yandex Maps API
-    if location_name:
-        location_info = search_location(location_name)
+    location_info = search_location(location_name)
 
-        if location_info:
-            # Extract the phone number from the location info
-            phone_number = location_info.get('phone_number')
+    if location_info:
+        # Extract the phone number from the location info
+        phone_number = location_info.get('phone_number')
 
-            # Send the phone number to the user
-            # Here, you can use a messaging service or directly send the response to the user
-            # For simplicity, let's assume you directly send the response
-            if location_name.lower() in message.lower():
-                return ChatResponse(response=f"Номер телефона {location_name}: {phone_number}\n\n{generated_text}")
-            else:
-                return ChatResponse(response=f"Номер телефона {location_name}: {phone_number}")
-        else:
-            return ChatResponse(response="Sorry, couldn't find the location. Please input a valid location name or add specific things such as the name of the road or place.")
+        # Send the phone number to the user
+        # Here, you can use a messaging service or directly send the response to the user
+        # For simplicity, let's assume you directly send the response
+        return ChatResponse(response=f"Номер телефона {location_name}: {phone_number}\n\n{generated_text}")
     else:
-        return ChatResponse(response="If you need a generated message, give me full instructions.")
+        return ChatResponse(response=f"Sorry, I couldn't find information for {location_name}.")
 
 
 def extract_location_name(generated_text):
-    system_message = '''
-        Напишите локацию места из сообщения.
-        Локация обязательно должна быть в городе Алматы.
-        Если пользователь не указывал локацию, верните пустую строку и попросите пользователя указать название локации.
-        Например, если пользователь ввел "Столик на пятерых, Бочонок на Назарбаева, сегодня, 8 вечера, Амир", то локация: Бочонок на Назарбаева.
-        Например, если пользователь ввел "Столик на двоих, ресторан Nino, сегодня в 18:00, Жанар", то локация: Nino.
-        Если у локации несколько филиалов, и пользователь не отметил какая именно ему требуется, попроси пользователя быть более специфичным и указать улицу по которой находится локация.
-    '''
-
-    # Ask GPT-3.5 turbo to identify the location from the user's message
     place_name = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-16k",
         messages=[
-            {"role": "system", "content": system_message},
+            {"role": "system", "content": '''
+            Напиши локацию места из сообщения. 
+            Локация обязательно должна быть в городе Алматы.
+            Например, если пользователь ввел "Столик на пятерых, Бочонок на Назарбаева, сегодня, 8 вечера, Амир", то локация: Бочонок на Назарбаева
+            '''},
             {"role": "user", "content": generated_text}
         ]
     )
 
-    extracted_name = place_name.choices[0].message.content.strip()
-
-    # Return the extracted location name if GPT-3.5 turbo identified a location, otherwise return an empty string
-    return extracted_name if extracted_name else ""
+    extracted_name = place_name.choices[0].message.content
+    return extracted_name
 
 
 def search_location(location_name):

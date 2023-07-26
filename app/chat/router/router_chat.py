@@ -7,6 +7,8 @@ import requests
 import logging
 from twilio.rest import Client
 import urllib.parse
+from typing import List
+
 
 
 router = APIRouter()

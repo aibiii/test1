@@ -6,6 +6,8 @@ import openai
 import requests
 import logging
 from twilio.rest import Client
+import urllib.parse
+
 
 router = APIRouter()
 import os
@@ -54,23 +56,22 @@ def chat_with_ai(
     # Extract the location name from the generated text
     location_name = extract_location_name(generated_text)
 
-    if not location_name:
-        # GPT couldn't extract the location name, respond to the user's input without mentioning the location or phone number
-        return ChatResponse(response=generated_text)
-
     # Search for the location using the Yandex Maps API
     location_info = search_location(location_name)
 
     if location_info:
         # Extract the phone number from the location info
         phone_number = location_info.get('phone_number')
+        whatsapp_link = f"https://api.whatsapp.com/send?phone={urllib.parse.quote(phone_number)}"
 
         # Send the phone number to the user
         # Here, you can use a messaging service or directly send the response to the user
         # For simplicity, let's assume you directly send the response
-        return ChatResponse(response=f"Номер телефона {location_name}: {phone_number}\n\n{generated_text}")
+        response_text = f"Номер телефона {location_name}: {phone_number}\n\n{generated_text}"
+        response_with_whatsapp = f"{response_text}\n\nСсылка на WhatsApp: {whatsapp_link}"
+        return ChatResponse(response=response_with_whatsapp)
     else:
-        return ChatResponse(response=f"Sorry, I couldn't find information for {location_name}.")
+        return ChatResponse(response=f"Извините, я не смог найти информацию по предоставленной локации.")
 
 
 def extract_location_name(generated_text):

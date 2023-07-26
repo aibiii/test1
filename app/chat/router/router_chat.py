@@ -74,7 +74,7 @@ def chat_with_ai(
         responses.append(booking_response)
 
         # Send WhatsApp link as a separate response
-        whatsapp_response = ChatResponse(response=f"Ссылка на WhatsApp: {whatsapp_link}")
+        whatsapp_response = ChatResponse(response=f"{whatsapp_link}")
         responses.append(whatsapp_response)
 
         return responses

@@ -60,19 +60,15 @@ def chat_with_ai(
     location_info = search_location(location_name)
 
     if location_info:
-        # Extract the phone number from the location info
         phone_number = location_info.get('phone_number')
-        
-        encoded_message = urllib.parse.quote("generated_text")
-        #whatsapp_link = f"https://wa.me/{phone_number}?text={encoded_message}"
         cleaned_phone_number = ''.join(filter(str.isdigit, phone_number))
-        whatsapp_link = f"https://wa.me/{cleaned_phone_number}?text={encoded_message}"
 
-        # Send the phone number to the user
-        # Here, you can use a messaging service or directly send the response to the user
-        # For simplicity, let's assume you directly send the response
+        whatsapp_link = f"https://wa.me/{cleaned_phone_number}" 
+
         response_text = f"Номер телефона {location_name}: {phone_number}\n\n{generated_text}"
-        response_with_whatsapp = f"{response_text}\n\nСсылка на WhatsApp: {whatsapp_link}"
+        response_with_whatsapp = f"{response_text}"
+        
+        response_with_whatsapp += f"\n\nСсылка на WhatsApp: {whatsapp_link}"
         return ChatResponse(response=response_with_whatsapp)
     else:
         return ChatResponse(response=f"Извините, я не смог найти информацию по предоставленной локации.")

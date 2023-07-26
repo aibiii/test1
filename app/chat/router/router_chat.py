@@ -65,7 +65,8 @@ def chat_with_ai(
         
         #encoded_message = urllib.parse.quote("generated_text")
         #whatsapp_link = f"https://wa.me/{phone_number}?text={encoded_message}"
-        whatsapp_link = f"https://wa.me/{phone_number}"
+        cleaned_phone_number = ''.join(filter(str.isdigit, phone_number))
+        whatsapp_link = f"https://wa.me/{cleaned_phone_number}"
 
         # Send the phone number to the user
         # Here, you can use a messaging service or directly send the response to the user

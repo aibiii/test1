@@ -24,7 +24,6 @@ class ChatRequest(AppModel):
 
 class ChatResponse(AppModel):
     response: str
-    whatsapp_link: str
 
 
 @router.post("/")
@@ -62,15 +61,15 @@ def chat_with_ai(
 
     if location_info:
         phone_number = location_info.get('phone_number')
-        
-        encoded_message = urllib.parse.quote(generated_text)
         cleaned_phone_number = ''.join(filter(str.isdigit, phone_number))
-        whatsapp_link = f"https://wa.me/{cleaned_phone_number}?text={encoded_message}"
 
-        response_text = f"Номер телефона {location_name}: {phone_number}"
-        response_with_whatsapp = f"{response_text}\n\nСсылка на WhatsApp: {whatsapp_link}"
+        whatsapp_link = f"https://wa.me/{cleaned_phone_number}" 
 
-        return ChatResponse(response=response_with_whatsapp, whatsapp_link=whatsapp_link)
+        response_text = f"Номер телефона {location_name}: {phone_number}\n\n{generated_text}"
+        response_with_whatsapp = f"{response_text}"
+        
+        response_with_whatsapp += f"\n\nСсылка на WhatsApp: {whatsapp_link}"
+        return ChatResponse(response=response_with_whatsapp)
     else:
         return ChatResponse(response=f"Извините, я не смог найти информацию по предоставленной локации.")
 

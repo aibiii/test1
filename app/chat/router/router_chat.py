@@ -30,7 +30,7 @@ class ChatResponse(AppModel):
 def chat_with_ai(
     request: ChatRequest,
     svc: Service = Depends(get_service),
-) -> ChatResponse:
+) -> List[ChatResponse]:
     message = request.message
 
     response = openai.ChatCompletion.create(
@@ -53,25 +53,31 @@ def chat_with_ai(
 
     generated_text = response.choices[0].message.content
 
-    # Extract the location name from the generated text
     location_name = extract_location_name(generated_text)
-
-    # Search for the location using the Yandex Maps API
     location_info = search_location(location_name)
 
     if location_info:
         phone_number = location_info.get('phone_number')
         cleaned_phone_number = ''.join(filter(str.isdigit, phone_number))
+        whatsapp_link = f"https://wa.me/{cleaned_phone_number}"
 
-        whatsapp_link = f"https://wa.me/{cleaned_phone_number}" 
+        responses = []
 
-        response_text = f"Номер телефона {location_name}: {phone_number}\n\n{generated_text}"
-        response_with_whatsapp = f"{response_text}"
-        
-        response_with_whatsapp += f"\n\nСсылка на WhatsApp: {whatsapp_link}"
-        return ChatResponse(response=response_with_whatsapp)
+        # Send phone number as a separate response
+        phone_response = ChatResponse(response=f"Номер телефона {location_name}: {phone_number}")
+        responses.append(phone_response)
+
+        # Send generated booking text as a separate response
+        booking_response = ChatResponse(response=generated_text)
+        responses.append(booking_response)
+
+        # Send WhatsApp link as a separate response
+        whatsapp_response = ChatResponse(response=f"Ссылка на WhatsApp: {whatsapp_link}")
+        responses.append(whatsapp_response)
+
+        return responses
     else:
-        return ChatResponse(response=f"Извините, я не смог найти информацию по предоставленной локации.")
+        return [ChatResponse(response="Извините, я не смог найти информацию по предоставленной локации.")]
 
 
 def extract_location_name(generated_text):

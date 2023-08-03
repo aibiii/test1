@@ -16,8 +16,8 @@ import os
 
 yandex_maps_api_key = os.getenv("YANDEX_MAPS_API_KEY")
 telegram_api_key = os.getenv("TELEGRAM_API_KEY")
-account_sid = os.getenv("ACCOUNT_SID")
-auth_token = os.getenv("AUTH_TOKEN")
+account_sid = os.getenv("SID")
+auth_token = os.getenv("AUTHTOKEN")
 
 
 class ChatRequest(AppModel):
@@ -63,6 +63,7 @@ def chat_with_ai(
         cleaned_phone_number = ''.join(filter(str.isdigit, phone_number))
         whatsapp_link = f"https://wa.me/{cleaned_phone_number}"
 
+        send_whatsapp_message(cleaned_phone_number, generated_text)
         responses = []
 
         # Send phone number as a separate response
@@ -81,6 +82,24 @@ def chat_with_ai(
     else:
         return [ChatResponse(response="Извините, я не смог найти информацию по предоставленной локации.")]
 
+
+def send_whatsapp_message(phone_number, message):
+    client = Client(account_sid, auth_token)
+
+    # Replace with your Twilio sandbox WhatsApp number
+    twilio_whatsapp_number = "+14155238886"
+
+    try:
+        client.messages.create(
+            body=message,
+            from_='whatsapp:' + twilio_whatsapp_number,
+            to='whatsapp:' + phone_number
+        )
+        return True
+    except Exception as e:
+        print("Error sending WhatsApp message:", str(e))
+        return False
+    
 
 def extract_location_name(generated_text):
     place_name = openai.ChatCompletion.create(

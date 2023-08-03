@@ -5,19 +5,14 @@ from telegram.ext import CommandHandler, MessageHandler, filters, Updater
 import openai
 import requests
 import logging
-from twilio.rest import Client
 import urllib.parse
 from typing import List
-
-
 
 router = APIRouter()
 import os
 
 yandex_maps_api_key = os.getenv("YANDEX_MAPS_API_KEY")
 telegram_api_key = os.getenv("TELEGRAM_API_KEY")
-account_sid = os.getenv("SID")
-auth_token = os.getenv("AUTHTOKEN")
 
 
 class ChatRequest(AppModel):
@@ -61,9 +56,13 @@ def chat_with_ai(
     if location_info:
         phone_number = location_info.get('phone_number')
         cleaned_phone_number = ''.join(filter(str.isdigit, phone_number))
-        whatsapp_link = f"https://wa.me/{cleaned_phone_number}"
 
-        send_whatsapp_message(cleaned_phone_number, generated_text)
+        # Pre-fill the WhatsApp message with the generated text
+        pre_filled_message = urllib.parse.quote(generated_text)
+        
+        # Generate the WhatsApp link with the pre-filled message
+        whatsapp_link = f"https://wa.me/{cleaned_phone_number}?text={pre_filled_message}"
+
         responses = []
 
         # Send phone number as a separate response
@@ -81,24 +80,6 @@ def chat_with_ai(
         return responses
     else:
         return [ChatResponse(response="Извините, я не смог найти информацию по предоставленной локации.")]
-
-
-def send_whatsapp_message(phone_number, message):
-    client = Client(account_sid, auth_token)
-
-    # Replace with your Twilio sandbox WhatsApp number
-    twilio_whatsapp_number = "+14155238886"
-
-    try:
-        client.messages.create(
-            body=message,
-            from_='whatsapp:' + twilio_whatsapp_number,
-            to='whatsapp:' + phone_number
-        )
-        return True
-    except Exception as e:
-        print("Error sending WhatsApp message:", str(e))
-        return False
     
 
 def extract_location_name(generated_text):

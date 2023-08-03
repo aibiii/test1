@@ -57,12 +57,11 @@ def chat_with_ai(
         phone_number = location_info.get('phone_number')
         cleaned_phone_number = ''.join(filter(str.isdigit, phone_number))
 
-        # Pre-fill the WhatsApp message with the generated text
-        pre_filled_message = urllib.parse.quote(generated_text)
-        
+        #  Pre-fill the WhatsApp message with the generated text
+        pre_filled_message = urllib.parse.quote(generated_text, safe='')
+
         # Generate the WhatsApp link with the pre-filled message
         whatsapp_link = f"https://wa.me/{cleaned_phone_number}?text={pre_filled_message}"
-        shortened_whatsapp_link = shorten_url(whatsapp_link)
 
         responses = []
 
@@ -75,7 +74,7 @@ def chat_with_ai(
         responses.append(booking_response)
 
         # Send WhatsApp link as a separate response
-        whatsapp_response = ChatResponse(response=shortened_whatsapp_link)
+        whatsapp_response = ChatResponse(response=f"{whatsapp_link}")
         responses.append(whatsapp_response)
 
         return responses
@@ -117,18 +116,6 @@ def search_location(location_name):
 
     return None
 
-
-# Custom URL shortening function using TinyURL service (or any other similar service)
-def shorten_url(url):
-    try:
-        response = requests.get(f"http://tinyurl.com/api-create.php?url={url}")
-        if response.status_code == 200:
-            return response.text
-        else:
-            return url  # Return the original URL if shortening failed
-    except:
-        return url  # Return the original URL if any error occurred during shortening
-    
 
 def main():
     updater = Updater(telegram_api_key, use_context=True)
